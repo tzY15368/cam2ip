@@ -6,7 +6,7 @@ import (
 	"net"
 	"net/http"
 
-	"github.com/abbot/go-http-auth"
+	auth "github.com/abbot/go-http-auth"
 
 	"github.com/gen2brain/cam2ip/handlers"
 	"github.com/gen2brain/cam2ip/reader"
@@ -58,17 +58,20 @@ func (s *Server) ListenAndServe() error {
 	http.HandleFunc("/favicon.ico", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	})
-
+	// http.HandleFunc("/index", func(w http.ResponseWriter, r *http.Request) {
+	// 	w.WriteHeader()
+	// })
 	http.Handle("/", newAuthHandler(handlers.NewIndex(), basic))
-
+	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
+	http.Handle("/processed/", http.StripPrefix("/processed/", http.FileServer(http.Dir("processed"))))
+	http.Handle("/raw/", http.StripPrefix("/raw/", http.FileServer(http.Dir("raw"))))
 	srv := &http.Server{}
 
 	listener, err := net.Listen("tcp4", s.Bind)
 	if err != nil {
 		return err
 	}
-
-	return srv.Serve(listener)
+	return srv.ServeTLS(listener, "api.pem", "api.key")
 }
 
 // newAuthHandler wraps handler and checks auth.

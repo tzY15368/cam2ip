@@ -1,7 +1,9 @@
 package handlers
 
 import (
+	"io/ioutil"
 	"net/http"
+	"os"
 )
 
 // Index handler.
@@ -19,14 +21,7 @@ func (i *Index) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "405 Method Not Allowed", http.StatusMethodNotAllowed)
 		return
 	}
-
-	w.Write([]byte(`<html>
-                        <head><title>cam2ip</title></head>
-                        <body>
-                        <h1>cam2ip</h1>
-                        <p><a href='/html'>html</a></p>
-                        <p><a href='/jpeg'>jpeg</a></p>
-                        <p><a href='/mjpeg'>mjpeg</a></p>
-                        </body>
-                        </html>`))
+	fd, _ := os.Open("html/index.html")
+	content, _ := ioutil.ReadAll(fd)
+	w.Write((content))
 }

@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<!--[if lt IE 7]>      <html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if IE 7]>         <html class="no-js lt-ie9 lt-ie8"> <![endif]-->
+<!--[if IE 8]>         <html class="no-js lt-ie9"> <![endif]-->
+<!--[if gt IE 8]>      <html class="no-js"> <!--<![endif]-->
+<html>
+
+<head>
+    <!-- CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>🔴录制中</title>
+    <meta name="description" content="">
+    <link rel="stylesheet" href="">
+    <link href="/static/index.css" rel="stylesheet">
+</head>
+
+<body>
+    <!--[if lt IE 7]>
+            <p class="browsehappy">You are using an <strong>outdated</strong> browser. Please <a href="#">upgrade your browser</a> to improve your experience.</p>
+        <![endif]-->
+    <!-- Modal -->
+    <div class="modal fade" id="modal1" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-body">
+                    <div class="cameradiv modalcamera">
+                        <img src="" width="100%" height="100%" id="i2">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <input type="checkbox" id="cbox1" value="">
+                    <label for="cbox1">扣人脸</label>
+                    <input type="checkbox" id="cbox2" value="">
+                    <label for="cbox2">去绿幕</label>
+                    <input type="checkbox" id="cbox3" value="">
+                    <label for="cbox3">调分辨率</label>
+                    <button type="button" class="btn btn-secondary" id="toggle">处理后</button>
+                    <button type="button" class="btn btn-primary" id="process">处理视频</button>
+                    <div id="processing" class="spinner-border" role="status" style="display: none;">
+                        <span class="sr-only">Loading...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="boundingbox">
+        <div class="cameradiv">
+            <img src="/jpeg?rand=1" width="100%" height="100%" id="i"
+                style="border-radius: 25px;" />
+        </div>
+        <div class="row display" id="display">
+        </div>
+        <div class="btn-group recbuttons" role="group">
+            <button type="button" class="btn btn-info btn-lg" id="record">&nbsp;录制&nbsp;</button>
+            <button type="button" class="btn btn-success btn-lg" id="shoot">&nbsp;拍摄&nbsp;</button>
+            <button type="button" class="btn btn-secondary btn-lg" id="up">↑</button>
+            <button type="button" class="btn btn-secondary btn-lg" id="down">↓</button>
+            <button type="button" class="btn btn-primary btn-lg" id="push">上传</button>
+
+        </div>
+    </div>
+    <!-- jQuery and JavaScript Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const frameRate = 70
+        let currentFrame = 0
+        let currentIndex = 0
+        let showVideoInterval
+        let paused = false
+        let showProcessed = false
+        setInterval(() => {
+            if (paused) return
+            document.getElementById("i").setAttribute("src", "/jpeg?rand=" + Math.random())
+            renderList()
+        }, frameRate);
+        var recording = false
+        var localPicCount = 0
+        var localRecCount = 0
+
+        const showVideo = (index) => {
+            console.log(index)
+            currentIndex = index
+            $("#modal1").modal('show')
+            $("#process").text("处理视频")
+            $("#i2").attr("src", "/recorded/" + index + "/IMG1.jpg")
+            fetch("/recordResult?id=" + index).then(res => res.json()).then(res => {
+                clearInterval(showVideoInterval)
+                showVideoInterval = setInterval(() => {
+                    currentFrame++
+                    if (currentFrame >= res.frameCount) {
+                        currentFrame = 1
+                    }
+                    $("#i2").attr("src", "/recorded/" + index + "/IMG" +
+                        currentFrame + ".jpg")
+                }, frameRate)
+            })
+        }
+        const showPhoto = (index) => {
+            $("#process").text("处理图片")
+            $("#modal1").modal('show')
+            $("#i2").attr("src", "/shot/IMG" + index + ".jpg")
+        }
+        $("#toggle").click((e) => {
+            showProcessed = !showProcessed
+            $("#toggle").text(showProcessed ? "处理后" : "处理前")
+        })
+        $("#process").click((e) => {
+            $("#processing").css("display", "block")
+            fetch("/processResult?id=" + currentIndex).then(res => res.json()).then(
+            res => {
+                clearInterval(showVideoInterval)
+                showVideoInterval = setInterval(() => {
+                    currentFrame++
+                    if (currentFrame >= res.frameCount) {
+                        currentFrame = 1
+                    }
+                    $("#i2").attr("src", "/processed/recorded/" +
+                        currentIndex + "/IMG" + currentFrame + ".jpg")
+                }, frameRate)
+            }).then(() => {
+                $("#processing").css("display", "none")
+            })
+        })
+        $("#modal1").on('shown.bs.modal', (e) => {
+            paused = true
+        })
+        $("#modal1").on('hidden.bs.modal', (e) => {
+            paused = false
+            clearInterval(showVideoInterval)
+        })
+        const renderList = () => {
+            fetch("/list").then(res => res.json()).then(res => {
+                let appended = ''
+                for (let i = localPicCount; i < res.picCount; i++) {
+                    let html = `
+            <div class="col-5 imgshow">
+                <img src="/shot/IMG${i+1}.jpg" width="100%" height="auto" onclick="showPhoto(${i+1})" style="border-radius: 15px;" >
+            </div>`
+                    appended += html
+                }
+                for (let i = localRecCount; i < res.recCount; i++) {
+                    let html = `
+            <div class="col-5 imgshow">
+                <div style="position:absolute;left:35%;top:29%;">
+                    <img src="/static/playred.png"/>    
+                 </div>
+                <img src="/recorded/${i+1}/IMG1.jpg" width="100%" height="auto" onclick="showVideo(${i+1})" style="border-radius: 15px;" >
+            </div>`
+                    appended += html
+                }
+                localPicCount = res.picCount
+                localRecCount = res.recCount
+                $("#display").append(appended)
+            })
+        }
+        $("#up").click(()=>{
+            $("#display").animate({scrollTop:0},500,'swing')
+        })
+        $("#down").click(()=>{
+            let scrollHeight = $("#display").prop("scrollHeight")
+            $("#display").animate({scrollTop:scrollHeight-$("#display").height()},500,'swing')
+        })
+        $("#push").click(() => {
+            console.log("ok")
+        })
+        $("#record").click(() => {
+            let o = $("#record")
+            recording = !recording
+            o.prop("disabled", true)
+            fetch("/record").then(res => res.json()).then(res => {
+                $("#record").text(res.recording ? "结束录制" : "开始录制")
+
+            }).catch(err => {
+                alert(err)
+            })
+            setTimeout(() => {
+                o.prop("disabled", false)
+
+            }, 500)
+            //o.css("background-color",recording?"red":"black")
+        })
+        $("#shoot").click(() => {
+            let o = $("#shoot")
+            o.prop("disabled", true)
+            fetch("/shoot").then(res => res.json()).then(res => {}).catch(err => {
+                alert(err)
+            })
+            setTimeout(() => {
+                o.prop("disabled", false)
+
+            }, 500)
+
+        })
+    </script>
+</body>
+
+</html>
