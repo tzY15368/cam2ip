@@ -9,6 +9,7 @@ import (
 	auth "github.com/abbot/go-http-auth"
 
 	"github.com/gen2brain/cam2ip/handlers"
+	"github.com/gen2brain/cam2ip/handlers/lad"
 	"github.com/gen2brain/cam2ip/reader"
 )
 
@@ -65,6 +66,13 @@ func (s *Server) ListenAndServe() error {
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 	http.Handle("/processed/", http.StripPrefix("/processed/", http.FileServer(http.Dir("processed"))))
 	http.Handle("/raw/", http.StripPrefix("/raw/", http.FileServer(http.Dir("raw"))))
+
+	http.Handle("/shoot", lad.NewShoot())
+	http.Handle("/record", lad.NewRecord())
+	http.Handle("/list", lad.NewList())
+	http.Handle("/recordResult", lad.NewRR())
+	http.Handle("/processResult", lad.NewPR())
+
 	srv := &http.Server{}
 
 	listener, err := net.Listen("tcp4", s.Bind)

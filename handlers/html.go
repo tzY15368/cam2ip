@@ -45,7 +45,7 @@ var html = `<html>
         <meta charset="utf-8"/>
         <title>cam2ip</title>
         <script>
-        ws = new WebSocket("ws://" + window.location.host + "/socket");
+        ws = new WebSocket("wss://" + window.location.host + "/socket");
         var image = new Image();
 
         ws.onopen = function() {
@@ -78,7 +78,7 @@ var htmlWebGL = `<html>
         <script>
 		var texture, vloc, tloc, vertexBuff, textureBuff;
 
-		ws = new WebSocket("ws://" + window.location.host + "/socket");
+		ws = new WebSocket("wss://" + window.location.host + "/socket");
 		var image = new Image();
 
 		ws.onopen = function() {

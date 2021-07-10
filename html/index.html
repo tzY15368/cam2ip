@@ -14,6 +14,22 @@
     <meta name="description" content="">
     <link rel="stylesheet" href="">
     <link href="/static/index.css" rel="stylesheet">
+    <script>
+        
+        let ws = new WebSocket("wss://" + window.location.host + "/socket");
+        var image = new Image();
+
+        ws.onopen = function() {
+            var context = document.getElementById("canvas").getContext("2d", {alpha: false});
+            image.onload = function() {
+                context.drawImage(image, 0, 0);
+            }
+        }
+
+        ws.onmessage = function(e) {
+            image.setAttribute("src", "data:image/jpeg;base64," + e.data);
+        }
+    </script>
 </head>
 
 <body>
@@ -47,8 +63,10 @@
     </div>
     <div class="boundingbox">
         <div class="cameradiv">
-            <img src="/jpeg?rand=1" width="100%" height="100%" id="i"
-                style="border-radius: 25px;" />
+            <!-- <img src="/jpeg?rand=1" width="100%" height="100%" id="i"
+                style="border-radius: 25px;" /> -->
+                
+                <canvas id="canvas" width="570px" height="480px" style="border-radius: 25px;"></canvas>
         </div>
         <div class="row display" id="display">
         </div>
@@ -69,17 +87,17 @@
         let currentFrame = 0
         let currentIndex = 0
         let showVideoInterval
-        let paused = false
+        let paused = true
         let showProcessed = false
-        setInterval(() => {
-            if (paused) return
-            document.getElementById("i").setAttribute("src", "/jpeg?rand=" + Math.random())
-            renderList()
-        }, frameRate);
+        // setInterval(() => {
+        //     if (paused) return
+        //     document.getElementById("i").setAttribute("src", "/jpeg?rand=" + Math.random())
+        //     renderList()
+        // }, frameRate);
+        
         var recording = false
         var localPicCount = 0
         var localRecCount = 0
-
         const showVideo = (index) => {
             console.log(index)
             currentIndex = index
@@ -93,7 +111,7 @@
                     if (currentFrame >= res.frameCount) {
                         currentFrame = 1
                     }
-                    $("#i2").attr("src", "/recorded/" + index + "/IMG" +
+                    $("#i2").attr("src", "/raw/recorded/" + index + "/IMG" +
                         currentFrame + ".jpg")
                 }, frameRate)
             })
@@ -101,7 +119,7 @@
         const showPhoto = (index) => {
             $("#process").text("处理图片")
             $("#modal1").modal('show')
-            $("#i2").attr("src", "/shot/IMG" + index + ".jpg")
+            $("#i2").attr("src", "/raw/shot/IMG" + index + ".jpg")
         }
         $("#toggle").click((e) => {
             showProcessed = !showProcessed
@@ -137,7 +155,7 @@
                 for (let i = localPicCount; i < res.picCount; i++) {
                     let html = `
             <div class="col-5 imgshow">
-                <img src="/shot/IMG${i+1}.jpg" width="100%" height="auto" onclick="showPhoto(${i+1})" style="border-radius: 15px;" >
+                <img src="/raw/shot/IMG${i+1}.jpg" width="100%" height="auto" onclick="showPhoto(${i+1})" style="border-radius: 15px;" >
             </div>`
                     appended += html
                 }
@@ -147,7 +165,7 @@
                 <div style="position:absolute;left:35%;top:29%;">
                     <img src="/static/playred.png"/>    
                  </div>
-                <img src="/recorded/${i+1}/IMG1.jpg" width="100%" height="auto" onclick="showVideo(${i+1})" style="border-radius: 15px;" >
+                <img src="/raw/recorded/${i+1}/IMG1.jpg" width="100%" height="auto" onclick="showVideo(${i+1})" style="border-radius: 15px;" >
             </div>`
                     appended += html
                 }
@@ -156,6 +174,8 @@
                 $("#display").append(appended)
             })
         }
+        
+        renderList()
         $("#up").click(()=>{
             $("#display").animate({scrollTop:0},500,'swing')
         })
@@ -171,8 +191,14 @@
             recording = !recording
             o.prop("disabled", true)
             fetch("/record").then(res => res.json()).then(res => {
+                console.log(res)
                 $("#record").text(res.recording ? "结束录制" : "开始录制")
-
+                $("#record").removeClass("btn-info")
+                $("#record").removeClass("btn-danger")
+                $("#record").addClass(res.recording?"btn-danger":"btn-info")
+                if(!res.recording){
+                    setTimeout(renderList,300)
+                }
             }).catch(err => {
                 alert(err)
             })
@@ -190,7 +216,7 @@
             })
             setTimeout(() => {
                 o.prop("disabled", false)
-
+                renderList()
             }, 500)
 
         })

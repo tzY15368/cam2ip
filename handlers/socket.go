@@ -3,12 +3,15 @@ package handlers
 import (
 	"bytes"
 	"context"
+	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"time"
 
 	"nhooyr.io/websocket"
 
+	"github.com/gen2brain/cam2ip/handlers/lad"
 	"github.com/gen2brain/cam2ip/image"
 	"github.com/gen2brain/cam2ip/reader"
 )
@@ -51,6 +54,22 @@ func (s *Socket) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 		b64 := image.EncodeToString(w.Bytes())
 
+		// strap on
+		lad.Lad.Mu.Lock()
+		if lad.Lad.Shoot {
+
+			lad.Lad.PicCount++
+			err := ioutil.WriteFile(fmt.Sprintf("raw/shot/IMG%d.jpg", lad.Lad.PicCount), w.Bytes(), 0777)
+			if err != nil {
+				log.Fatal(err)
+			}
+			lad.Lad.Shoot = false
+		} else if lad.Lad.Recording {
+			lad.Lad.Recorded = append(lad.Lad.Recorded, w.Bytes())
+		}
+		lad.Lad.Mu.Unlock()
+
+		// end strap on
 		err = conn.Write(ctx, websocket.MessageText, []byte(b64))
 		if err != nil {
 			break
