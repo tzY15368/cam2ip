@@ -47,5 +47,5 @@ func NewPR() *ProcessResult {
 	return &ProcessResult{}
 }
 func (pr *ProcessResult) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	Lad.ServeProcessResult(w, r)
+	Lad.ServeProcess(w, r)
 }

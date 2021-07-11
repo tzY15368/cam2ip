@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"os/exec"
 	"sync"
 )
 
@@ -33,10 +34,22 @@ type LAD struct {
 func (lad *LAD) DoProcess(pr ProcessRequest) bool {
 	lad.Mu.Lock()
 	defer lad.Mu.Unlock()
-	if lad.RecCount < pr.id {
-		return false
+	switch pr.pType {
+	case "vid":
+		if lad.RecCount < pr.id {
+			return false
+		}
+	case "img":
+		if lad.PicCount < pr.id {
+			return false
+		}
+	default:
+		log.Fatal("invalid process type")
 	}
-	return true
+
+	cmd := exec.Command("ls", "-ll")
+	err := cmd.Run()
+	return err == nil
 }
 
 func (lad *LAD) DoRecord() bool {
@@ -144,9 +157,9 @@ func (lad *LAD) ServeProcess(w http.ResponseWriter, r *http.Request) {
 	pr := ProcessRequest{
 		pType:  v.Get("type"),
 		id:     id,
-		face:   v.Get("face") != "",
-		green:  v.Get("green") != "",
-		resize: v.Get("resize") != "",
+		face:   v.Get("face") == "true",
+		green:  v.Get("green") == "true",
+		resize: v.Get("resize") == "true",
 	}
 	result := make(map[string]bool)
 	result["success"] = Lad.DoProcess(pr)

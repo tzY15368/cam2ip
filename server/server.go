@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"os/user"
 
 	auth "github.com/abbot/go-http-auth"
 
@@ -79,8 +80,14 @@ func (s *Server) ListenAndServe() error {
 	if err != nil {
 		return err
 	}
-	//return srv.ServeTLS(listener, "api.pem", "api.key")
-	return srv.Serve(listener)
+	u, _ := user.Current()
+	if u.Name == "lynn" {
+		fmt.Println("serving https")
+		return srv.ServeTLS(listener, "api.pem", "api.key")
+	} else {
+		fmt.Println("serving http")
+		return srv.Serve(listener)
+	}
 }
 
 // newAuthHandler wraps handler and checks auth.

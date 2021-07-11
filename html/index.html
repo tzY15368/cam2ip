@@ -15,20 +15,24 @@
     <link rel="stylesheet" href="">
     <link href="/static/index.css" rel="stylesheet">
     <script>
-        
-        let ws = new WebSocket("ws://" + window.location.host + "/socket");
-        var image = new Image();
-
-        ws.onopen = function() {
-            var context = document.getElementById("canvas").getContext("2d", {alpha: false});
-            image.onload = function() {
-                context.drawImage(image, 0, 0);
-            }
+        let scheme = "wss://"
+        var protocolStr = document.location.protocol;
+        if(document.location.protocol === "http:"){
+            scheme = "ws://"
         }
+        // let ws = new WebSocket(scheme+ window.location.host + "/socket");
+        // var image = new Image();
 
-        ws.onmessage = function(e) {
-            image.setAttribute("src", "data:image/jpeg;base64," + e.data);
-        }
+        // ws.onopen = function() {
+        //     var context = document.getElementById("canvas").getContext("2d", {alpha: false});
+        //     image.onload = function() {
+        //         context.drawImage(image, 0, 0);
+        //     }
+        // }
+
+        // ws.onmessage = function(e) {
+        //     image.setAttribute("src", "data:image/jpeg;base64," + e.data);
+        // }
     </script>
 </head>
 
@@ -46,13 +50,13 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <input type="checkbox" id="cbox1" value="">
+                    <input type="checkbox" id="face" value="face">
                     <label for="cbox1">扣人脸</label>
-                    <input type="checkbox" id="cbox2" value="">
+                    <input type="checkbox" id="green" value="green">
                     <label for="cbox2">去绿幕</label>
-                    <input type="checkbox" id="cbox3" value="">
+                    <input type="checkbox" id="resize" value="resize">
                     <label for="cbox3">调分辨率</label>
-                    <button type="button" class="btn btn-secondary" id="toggle">处理后</button>
+                    <button type="button" class="btn btn-secondary" id="toggle" disabled>处理后</button>
                     <button type="button" class="btn btn-primary" id="process">处理视频</button>
                     <div id="processing" class="spinner-border" role="status" style="display: none;">
                         <span class="sr-only">Loading...</span>
@@ -85,41 +89,76 @@
     <script>
         const frameRate = 70
         let currentFrame = 0
-        let currentIndex = 0
         let showVideoInterval
-        let paused = true
+        let paused = false
         let showProcessed = false
-        // setInterval(() => {
-        //     if (paused) return
-        //     document.getElementById("i").setAttribute("src", "/jpeg?rand=" + Math.random())
-        //     renderList()
-        // }, frameRate);
         
         var recording = false
         var localPicCount = 0
         var localRecCount = 0
+
+        var processedImages = {}
+        let processedVideos = {}
+
+        let currentViewType = ""
+        let currentViewIndex = 0
+
         const showVideo = (index) => {
+            $("#toggle").prop("disabled", true)
+            currentFrame = 0
+            currentViewIndex = index
+            currentViewType = "vid"
             console.log(index)
-            currentIndex = index
             $("#modal1").modal('show')
             $("#process").text("处理视频")
             $("#i2").attr("src", "/recorded/" + index + "/IMG1.jpg")
             fetch("/recordResult?id=" + index).then(res => res.json()).then(res => {
+                
                 clearInterval(showVideoInterval)
                 showVideoInterval = setInterval(() => {
+                    if(paused)return
                     currentFrame++
                     if (currentFrame >= res.frameCount) {
                         currentFrame = 1
                     }
-                    $("#i2").attr("src", "/raw/recorded/" + index + "/IMG" +
-                        currentFrame + ".jpg")
+                    $("#i2").attr("src", `/${showProcessed?"processed":"raw"}/recorded/` + index + "/IMG" +
+                        currentFrame + `.jpg?id=${currentViewIndex}`)
                 }, frameRate)
+
+
+
+                if(currentViewType==="img"){
+                if(!processedImages[currentViewIndex])return
+            } else if (currentViewIndex==="vid"){
+                if(!processedVideos[currentViewIndex])return
+            } else {
+                return
+            }
+                
+            $("#toggle").prop("disabled", false)
+
             })
         }
         const showPhoto = (index) => {
+            $("#toggle").prop("disabled", true)
+            currentViewIndex = index
+            currentViewType = "img"
             $("#process").text("处理图片")
             $("#modal1").modal('show')
-            $("#i2").attr("src", "/raw/shot/IMG" + index + ".jpg")
+            $("#i2").attr("src", `/${showProcessed?"processed":"raw"}/shot/IMG` + index + ".jpg")
+            processedImages[index] = true
+
+
+
+            if(currentViewType==="img"){
+                if(!processedImages[currentViewIndex])return
+            } else if (currentViewIndex==="vid"){
+                if(!processedVideos[currentViewIndex])return
+            } else {
+                return
+            }
+            
+            $("#toggle").prop("disabled", false)
         }
         $("#toggle").click((e) => {
             showProcessed = !showProcessed
@@ -127,26 +166,28 @@
         })
         $("#process").click((e) => {
             $("#processing").css("display", "block")
-            fetch("/processResult?id=" + currentIndex).then(res => res.json()).then(
+            paused = true
+            fetch(`/process?id=${currentViewIndex}&type=${currentViewType}&face=${$("#face").prop('checked')}&green=${$("#green").prop('checked')}&resize=${$("#resize").prop('checked')}`)
+            .then(res => res.json()).then(
             res => {
-                clearInterval(showVideoInterval)
-                showVideoInterval = setInterval(() => {
-                    currentFrame++
-                    if (currentFrame >= res.frameCount) {
-                        currentFrame = 1
-                    }
-                    $("#i2").attr("src", "/processed/recorded/" +
-                        currentIndex + "/IMG" + currentFrame + ".jpg")
-                }, frameRate)
+
+                if(!res.success){
+                    alert("error")
+                    return false
+                }
+                if(currentViewType==="img"){
+                    processedImages[currentViewIndex] = true
+                } else {
+                    processedVideos[currentViewIndex] = true
+                }
             }).then(() => {
                 $("#processing").css("display", "none")
+                paused = false
             })
         })
         $("#modal1").on('shown.bs.modal', (e) => {
-            paused = true
         })
         $("#modal1").on('hidden.bs.modal', (e) => {
-            paused = false
             clearInterval(showVideoInterval)
         })
         const renderList = () => {
