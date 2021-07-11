@@ -71,7 +71,7 @@ func (s *Server) ListenAndServe() error {
 	http.Handle("/record", lad.NewRecord())
 	http.Handle("/list", lad.NewList())
 	http.Handle("/recordResult", lad.NewRR())
-	http.Handle("/processResult", lad.NewPR())
+	http.Handle("/process", lad.NewPR())
 
 	srv := &http.Server{}
 
@@ -79,7 +79,8 @@ func (s *Server) ListenAndServe() error {
 	if err != nil {
 		return err
 	}
-	return srv.ServeTLS(listener, "api.pem", "api.key")
+	//return srv.ServeTLS(listener, "api.pem", "api.key")
+	return srv.Serve(listener)
 }
 
 // newAuthHandler wraps handler and checks auth.

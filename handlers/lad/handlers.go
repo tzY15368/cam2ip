@@ -32,16 +32,19 @@ func (ss *Shoot) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 type RecordResult struct{}
-type ProcessResult struct{}
 
 func NewRR() *RecordResult {
 	return &RecordResult{}
 }
-func NewPR() *ProcessResult {
-	return &ProcessResult{}
-}
+
 func (rr *RecordResult) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	Lad.ServeRecordResult(w, r)
+}
+
+type ProcessResult struct{}
+
+func NewPR() *ProcessResult {
+	return &ProcessResult{}
 }
 func (pr *ProcessResult) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	Lad.ServeProcessResult(w, r)

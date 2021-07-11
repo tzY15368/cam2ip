@@ -16,7 +16,7 @@
     <link href="/static/index.css" rel="stylesheet">
     <script>
         
-        let ws = new WebSocket("wss://" + window.location.host + "/socket");
+        let ws = new WebSocket("ws://" + window.location.host + "/socket");
         var image = new Image();
 
         ws.onopen = function() {

@@ -10,6 +10,14 @@ import (
 	"sync"
 )
 
+type ProcessRequest struct {
+	pType  string
+	id     int
+	face   bool
+	green  bool
+	resize bool
+}
+
 type LAD struct {
 	Shoot        bool
 	Recording    bool
@@ -20,6 +28,15 @@ type LAD struct {
 	RecFrame     int
 	CurrentFrame int
 	MaxFrames    int
+}
+
+func (lad *LAD) DoProcess(pr ProcessRequest) bool {
+	lad.Mu.Lock()
+	defer lad.Mu.Unlock()
+	if lad.RecCount < pr.id {
+		return false
+	}
+	return true
 }
 
 func (lad *LAD) DoRecord() bool {
@@ -115,14 +132,24 @@ func (lad *LAD) ServeRecordResult(w http.ResponseWriter, r *http.Request) {
 	w.Write(b)
 }
 
-func (lad *LAD) ServeProcessResult(w http.ResponseWriter, r *http.Request) {
+func (lad *LAD) ServeProcess(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	w.WriteHeader(http.StatusOK)
 	v := r.URL.Query()
-	sid := v.Get("id")
-	files, _ := ioutil.ReadDir(fmt.Sprintf("processed/recorded/%s", sid))
-	result := make(map[string]int)
-	result["frameCount"] = len(files) - 1
+	var id int
+	_, err := fmt.Sscanf(v.Get("id"), "%d", &id)
+	if err != nil {
+		log.Fatal(err)
+	}
+	pr := ProcessRequest{
+		pType:  v.Get("type"),
+		id:     id,
+		face:   v.Get("face") != "",
+		green:  v.Get("green") != "",
+		resize: v.Get("resize") != "",
+	}
+	result := make(map[string]bool)
+	result["success"] = Lad.DoProcess(pr)
 	b, _ := json.Marshal(result)
 	w.Write(b)
 }
