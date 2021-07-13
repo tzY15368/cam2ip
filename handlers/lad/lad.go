@@ -46,10 +46,24 @@ func (lad *LAD) DoProcess(pr ProcessRequest) bool {
 	default:
 		log.Fatal("invalid process type")
 	}
-
-	cmd := exec.Command("ls", "-ll")
-	err := cmd.Run()
-	return err == nil
+    //python3 process.py <type:img|vid> <id> <op:green|resize|face>
+    sid := fmt.Sprintf("%d",pr.id)
+    if pr.resize {
+	    cmd := exec.Command("python3", "process.py",pr.pType,sid,"resize")
+    	err := cmd.Run()
+        if err != nil {fmt.Println("error-process:",err)}    
+}
+    if pr.green {
+        cmd := exec.Command("python3", "process.py",pr.pType,sid,"green")
+        err := cmd.Run()
+        if err != nil {fmt.Println("error-process:",err)}
+    }
+    if pr.face {
+        cmd := exec.Command("python3", "process.py",pr.pType,sid,"face")
+        err := cmd.Run()
+        if err != nil {fmt.Println("error-process:",err)}
+    }
+	return false
 }
 
 func (lad *LAD) DoRecord() bool {
