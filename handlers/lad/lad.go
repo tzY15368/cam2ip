@@ -34,6 +34,7 @@ type LAD struct {
 func (lad *LAD) DoProcess(pr ProcessRequest) bool {
 	lad.Mu.Lock()
 	defer lad.Mu.Unlock()
+	fmt.Println(pr)
 	switch pr.pType {
 	case "vid":
 		if lad.RecCount < pr.id {
@@ -46,24 +47,33 @@ func (lad *LAD) DoProcess(pr ProcessRequest) bool {
 	default:
 		log.Fatal("invalid process type")
 	}
-    //python3 process.py <type:img|vid> <id> <op:green|resize|face>
-    sid := fmt.Sprintf("%d",pr.id)
-    if pr.resize {
-	    cmd := exec.Command("python3", "process.py",pr.pType,sid,"resize")
-    	err := cmd.Run()
-        if err != nil {fmt.Println("error-process:",err)}    
-}
-    if pr.green {
-        cmd := exec.Command("python3", "process.py",pr.pType,sid,"green")
-        err := cmd.Run()
-        if err != nil {fmt.Println("error-process:",err)}
-    }
-    if pr.face {
-        cmd := exec.Command("python3", "process.py",pr.pType,sid,"face")
-        err := cmd.Run()
-        if err != nil {fmt.Println("error-process:",err)}
-    }
-	return false
+	//python3 process.py <type:img|vid> <id> <op:green|resize|face>
+	sid := fmt.Sprintf("%d", pr.id)
+	if pr.resize {
+		cmd := exec.Command("python3", "process.py", pr.pType, sid, "resize")
+		data, err := cmd.CombinedOutput()
+		if err != nil {
+			fmt.Println("process:resize:", err, string(data))
+			return false
+		}
+	}
+	if pr.green {
+		cmd := exec.Command("python3", "process.py", pr.pType, sid, "green")
+		err := cmd.Run()
+		if err != nil {
+			fmt.Println("process:green:", err)
+			return false
+		}
+	}
+	if pr.face {
+		cmd := exec.Command("python3", "process.py", pr.pType, sid, "face")
+		err := cmd.Run()
+		if err != nil {
+			fmt.Println("process:face:", err)
+			return false
+		}
+	}
+	return true
 }
 
 func (lad *LAD) DoRecord() bool {
