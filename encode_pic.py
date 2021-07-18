@@ -11,6 +11,7 @@ class BMPEncoder:
 
     def transform(self, input_file_name, output_file_name):
         self.read_file(input_file_name)
+        self.white_balance()
         self.encode_pic()
         self.save_file(output_file_name)
 
@@ -84,18 +85,26 @@ class BMPEncoder:
             table_line = []
             for r in r_range:
                 seita = math.radians(degree)
+                # y up, x right
                 x = int(round(r * math.cos(seita)+79.5))
                 y = int(round(r * math.sin(seita)+79.5))
                 table_line.append([x, y])
             self.encode_table.append(table_line)
+
+    def white_balance(self):
+        for line in self.bmp_data:
+            for p in line:
+                p[0] = int(p[0] * 0.7)  # G
+                p[1] = int(p[1] * 0.7)  # B
+                p[2] = int(p[2])  # R
 
     def encode_pic(self):
         self.encoded_data = []
         for table_line in self.encode_table:
             data_line = []
             for index in range(0, len(table_line)):
-                x = table_line[index][0]
-                y = table_line[index][1]
+                y = table_line[index][0]
+                x = 159 - table_line[index][1]
                 data_line.append(
                     [
                         255-round(i*abs(79.5 - index)/79.5)
