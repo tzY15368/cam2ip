@@ -100,10 +100,10 @@ def unnormal_green_background(in_path, out_path, i):
     bgra = remove_green_background(in_address)
     region = not_green_to_square(bgra)
     # 输出
+    region = region.convert('RGB')
     out_address = os.path.join(out_path, 'IMG'+str(i)+'.bmp')
     resize_img(region, out_address)
     out_address = os.path.join(out_path, 'IMG'+str(i)+'.jpg')
-    region = region.convert('RGB')
     resize_img(region, out_address)
 
 
