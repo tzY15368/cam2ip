@@ -45,16 +45,20 @@ def send_photo(ppath):  # 参数：图片完整路径
     except Exception as e:
         print("PhotoException:", e)
 
-if __name__ == "__main__":
-    import sys,os
+
+if __name__ == '__main__':
+    # python3 pi2stm32.py <type:vid|img> <id:int>
+    import sys
+    import os
+
     otype = sys.argv[1]
     id = sys.argv[2]
-    # python3 pi2stm32.py <type:vid|img> <id:int>
+
     try:
         if otype == "vid":
-            send_video(os.path.join("raw","recorded",str(id)))
+            send_video(os.path.join("processed", "recorded", str(id)), 'hex')
         elif otype == "img":
-            send_photo(os.path.join("raw","shot",str(id)))
-        exit(0)    
+            send_photo(os.path.join("processed", "shot", 'IMG'+str(id)+'.hex'))
+        exit(0)
     except:
         exit(-1)
