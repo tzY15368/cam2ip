@@ -59,12 +59,12 @@ func (lad *LAD) DoProcess(pr ProcessRequest) bool {
 	}
 	if pr.green {
 		cmd := exec.Command("python3", "process.py", pr.pType, sid, "green")
-		err := cmd.Run()
-		if err != nil {
-			fmt.Println("process:green:", err)
-			return false
-		}
-	}
+        data, err := cmd.CombinedOutput()
+          if err != nil {
+              fmt.Println("process:resize:", err, string(data))
+              return false
+          }	
+    }
 	if pr.face {
 		cmd := exec.Command("python3", "process.py", pr.pType, sid, "face")
 		err := cmd.Run()

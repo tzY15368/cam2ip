@@ -4,8 +4,8 @@ from cv2 import imwrite
 import numpy as np
 from PIL import Image
 import os
-import paddlehub
-import paddlehub as hub
+#import paddlehub
+#import paddlehub as hub
 
 from encode_pic import BMPEncoder
 
@@ -208,22 +208,19 @@ def shot_paddlehub(i):
 
 
 def shot_encode(i):
-    in_path = os.path.join('raw', 'shot')  # 待读取的文件夹
+    in_path = os.path.join('processed', 'shot')  # 待读取的文件夹
     out_path = os.path.join('processed', 'shot')  # 待写入的文件夹
 
     bmp_path = os.path.join(in_path, 'IMG'+str(i)+'.bmp')
-    hex_path = os.path.join(in_path, 'IMG'+str(i)+'.hex')
+    hex_path = os.path.join(out_path, 'IMG'+str(i)+'.hex')
 
     encoder = BMPEncoder()
     encoder.transform(bmp_path, hex_path)
 
 
 def recorded_encode(i):
-    in_path = os.path.join('raw', 'recorded', str(i))  # 待读取的文件夹
+    in_path = os.path.join('processed', 'recorded', str(i))  # 待读取的文件夹
     out_path = os.path.join('processed', 'recorded', str(i))  # 待写入的文件夹
-
-    bmp_path = os.path.join(in_path, 'IMG'+str(i)+'.bmp')
-    hex_path = os.path.join(in_path, 'IMG'+str(i)+'.hex')
 
     encoder = BMPEncoder()
 
@@ -259,7 +256,10 @@ if __name__ == "__main__":
             elif op == "face":
                 recorded_paddlehub(id)
             recorded_encode(id)
-    except:
+    except Exception as e:
+        import traceback
+        traceback.print_exec()
+        print(e)
         exit(-1)
     exit(0)
 

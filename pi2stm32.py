@@ -56,9 +56,9 @@ if __name__ == '__main__':
 
     try:
         if otype == "vid":
-            send_video(os.path.join("raw", "recorded", str(id)), 'hex')
+            send_video(os.path.join("processed", "recorded", str(id)), 'hex')
         elif otype == "img":
-            send_photo(os.path.join("raw", "shot", str(id)+'.hex'))
+            send_photo(os.path.join("processed", "shot", 'IMG'+str(id)+'.hex'))
         exit(0)
     except:
         exit(-1)
